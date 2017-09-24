@@ -17,6 +17,12 @@ interface IClientConnection {
   lastSeenOnline: number;
 }
 
+interface IUsersConnection {
+  //userId: number;
+  ws: ws;
+  lastSeenOnline: number;
+}
+
 const messagesTail = 50;
 
 export function create(server: http.Server) {
@@ -29,6 +35,7 @@ export function create(server: http.Server) {
   let messagesCollection: mongodb.Collection = undefined;
   let routesCollection: mongodb.Collection = undefined;
   let placesCollection: mongodb.Collection = undefined;
+  let usersCollection: mongodb.Collection = undefined;
 
   // 
   let clients: IClientConnection[] = [];
@@ -63,7 +70,7 @@ export function create(server: http.Server) {
     }
   }
 
-  mongodb.MongoClient.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI, (err, res) => {
+  mongodb.MongoClient.connect(process.env.MONGODB_URI, (err, res) => {
     if (err) {
       console.log(err);
       process.exit(1);
