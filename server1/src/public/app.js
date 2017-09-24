@@ -12,13 +12,25 @@ $(function () {
       data: text
     }));
     $('#m').val('');
-    $('#messages').append($('<li>').text(text));
+    showTextMessage(text);
     return false;
   });
 
-  var appendMessage
+  var appendMessage = (message, scroll) => {
+    if (!message.type)
+      return;
+    if (message.type == "text") {
+      $('#messages').append($('<li>').text(message.data));
+    }
+    if (scroll)
+      window.scrollTo(0, document.body.scrollHeight);
+  }
 
-  var showMessage = (event) => {
+  var showTextMessage = (message, scroll) => {
+    appendMessage({type: "text", data: message}, true);
+  }
+
+  var onMessage = (event) => {
     let data = undefined;
     try {
       data = JSON.parse(event);
@@ -28,11 +40,7 @@ $(function () {
         if (!data.messages || !data.messages.length)
           return;
         for(var i = data.messages.length - 1 ; i >= 0 ; i--) {
-          if (!data.messages[i].type)
-            return;
-          if (data.messages[i].type == "text") {
-            $('#messages').append($('<li>').text(data.messages[i].data));
-          }
+          appendMessage(data.messages[i]);
         }
         window.scrollTo(0, document.body.scrollHeight);
       }
@@ -42,8 +50,8 @@ $(function () {
     }
   };
 
-  ws.onerror = () => showMessage('WebSocket error');
-  ws.onopen = () => showMessage('WebSocket connection established');
-  ws.onclose = () => showMessage('WebSocket connection closed');
-  ws.onmessage = (event) => showMessage(event.data);
+  ws.onerror = () => showTextMessage('WebSocket error');
+  ws.onopen = () => showTextMessage('WebSocket connection established');
+  ws.onclose = () => showTextMessage('WebSocket connection closed');
+  ws.onmessage = (event) => onMessage(event.data);
 });

@@ -36,6 +36,16 @@ app.use(bodyParser.text());
 console.log(path.join(__dirname, "/../src/public"));
 app.use(express.static(path.join(__dirname, "/../src/public"), { maxAge: 31557600000 }));
 
+
+
+app.use("/cycle", (req, res, next) => {
+  console.log(req.originalUrl.substr(7, 5));
+  res.redirect("https://tile.thunderforest.com" + req.originalUrl);
+  //res.status(200);
+  //res.json({ok: true});
+});
+
+
 /**
  * OAuth authentication routes. (Sign in)
  */
