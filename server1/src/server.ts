@@ -9,6 +9,8 @@ import logger = require("morgan");
 import errorHandler = require("errorhandler");
 import dotenv = require("dotenv");
 import path = require("path");
+import authorization = require('express-authorization');
+
 
 import passport = require("passport");
 import websocket = require("websocket");
@@ -38,25 +40,25 @@ app.use(express.static(path.join(__dirname, "/../src/public"), { maxAge: 3155760
 
 
 
-app.use("/cycle", (req, res, next) => {
+/* app.use("/cycle", (req, res, next) => {
   console.log(req.originalUrl.substr(7, 5));
   res.redirect("https://tile.thunderforest.com" + req.originalUrl);
   //res.status(200);
   //res.json({ok: true});
-});
+}); */
 
 
 /**
  * OAuth authentication routes. (Sign in)
  */
-app.get("/auth/facebook", (req, res, next) => {
+app.get("/login", (req, res, next) => {
   res.status(200);
   res.json({ok: true});
 });
 
-app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/login" }), (req, res) => {
+/* app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/login" }), (req, res) => {
   res.redirect(req.session.returnTo || "/");
-});
+}); */
 
 /**
  * Error Handler. Provides full stack - remove for production

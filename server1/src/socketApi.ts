@@ -17,10 +17,11 @@ interface IClientConnection {
   lastSeenOnline: number;
 }
 
-interface IUsersConnection {
-  //userId: number;
-  ws: ws;
-  lastSeenOnline: number;
+interface IUser {
+  userId: number;
+  name: string;
+  password: string;
+  sessions: string[];
 }
 
 const messagesTail = 50;
@@ -79,6 +80,7 @@ export function create(server: http.Server) {
     messagesCollection = db.collection("messages");
     routesCollection = db.collection("routes");
     routesCollection = db.collection("places");
+    usersCollection = db.collection("users");
   });
 
   const wss = new ws.Server({
