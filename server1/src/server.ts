@@ -5,16 +5,19 @@ import express = require("express");
 import compression = require("compression");  // compresses requests
 import session = require("express-session");
 import bodyParser = require("body-parser");
+import cookieParser = require("cookie-parser");
 import logger = require("morgan");
 import errorHandler = require("errorhandler");
 import dotenv = require("dotenv");
 import path = require("path");
-import authorization = require('express-authorization');
+import authorization = require("express-authorization");
 
 
 import passport = require("passport");
 import websocket = require("websocket");
 import http = require("http");
+
+import addUserDB = require("./loginDB");
 
 /**
  * Load environment variables from .env file, where API keys and passwords are configured.
@@ -34,31 +37,23 @@ app.use(logger("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.text());
+app.use(session());
 
 console.log(path.join(__dirname, "/../src/public"));
 app.use(express.static(path.join(__dirname, "/../src/public"), { maxAge: 31557600000 }));
 
 
 
-/* app.use("/cycle", (req, res, next) => {
-  console.log(req.originalUrl.substr(7, 5));
-  res.redirect("https://tile.thunderforest.com" + req.originalUrl);
-  //res.status(200);
-  //res.json({ok: true});
-}); */
-
-
-/**
- * OAuth authentication routes. (Sign in)
- */
-app.get("/login", (req, res, next) => {
-  res.status(200);
-  res.json({ok: true});
+app.post("/login", (req, res, next) => {
+  addUserDB(req.body);
+  req.session.user = {
+    name: req.body.name,
+    password: req.body.password
+  };
+  res.redirect('/chat.html');
+  console.log(req.body, "loginform");
 });
 
-/* app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/login" }), (req, res) => {
-  res.redirect(req.session.returnTo || "/");
-}); */
 
 /**
  * Error Handler. Provides full stack - remove for production
