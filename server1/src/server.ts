@@ -19,10 +19,14 @@ import http = require("http");
 
 import loginDB = require("./loginDB");
 
+import { Core } from "./core";
+
 /**
  * Load environment variables from .env file, where API keys and passwords are configured.
  */
 dotenv.config({ path: ".env.example" });
+
+Core.Init();
 
 /**
  * Create Express server.

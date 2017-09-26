@@ -2,7 +2,8 @@ import ws = require("ws");
 import express = require("express");
 import http = require("http");
 import url = require("url");
-import mongodb = require("mongodb");
+import { Core } from "./core";
+import { Collection } from "./storage";
 
 interface IChatMessage {
   timestamp: number;
@@ -31,14 +32,6 @@ export function create(server: http.Server) {
   // router
   const router = express.Router();
 
-  // db
-  let db: mongodb.Db = undefined;
-  let messagesCollection: mongodb.Collection = undefined;
-  let routesCollection: mongodb.Collection = undefined;
-  let placesCollection: mongodb.Collection = undefined;
-  let usersCollection: mongodb.Collection = undefined;
-
-  // 
   let clients: IClientConnection[] = [];
 
   let onClientMessage = (message: ws.Data): void => {
@@ -47,7 +40,7 @@ export function create(server: http.Server) {
       if (!chatMessage.userId || !chatMessage.type || !chatMessage.data)
         return console.log("Wrong message format");
       chatMessage.timestamp = getCurrentTimestamp();
-      messagesCollection.insertOne(chatMessage, (err, result) => {
+      Core.getStorage().getCollection(Collection.Messages).insertOne(chatMessage, (err, result) => {
         if (err)
           return console.log(err);
       });
@@ -60,7 +53,8 @@ export function create(server: http.Server) {
   let onClientConnected = async (client: IClientConnection) => {
     clients.push(client);
     try {
-      let lastMessages = await messagesCollection.find().sort({ timestamp: -1 }).limit(messagesTail).toArray();
+      let coll = Core.getStorage().getCollection(Collection.Messages);
+      let lastMessages = await coll.find().sort({ timestamp: -1 }).limit(messagesTail).toArray();
       client.ws.send(JSON.stringify({
         type: "messages",
         messages: lastMessages
@@ -70,18 +64,6 @@ export function create(server: http.Server) {
       console.log(e);
     }
   }
-
-  mongodb.MongoClient.connect(process.env.MONGODB_URI, (err, res) => {
-    if (err) {
-      console.log(err);
-      process.exit(1);
-    }
-    db = res;
-    messagesCollection = db.collection("messages");
-    routesCollection = db.collection("routes");
-    routesCollection = db.collection("places");
-    usersCollection = db.collection("users");
-  });
 
   const wss = new ws.Server({
     server: server
