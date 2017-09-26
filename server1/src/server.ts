@@ -17,7 +17,7 @@ import passport = require("passport");
 import websocket = require("websocket");
 import http = require("http");
 
-import addUserDB = require("./loginDB");
+import loginDB = require("./loginDB");
 
 /**
  * Load environment variables from .env file, where API keys and passwords are configured.
@@ -37,7 +37,13 @@ app.use(logger("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.text());
-app.use(session());
+
+app.use(session({
+  secret: "keyboard cat",
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: true }
+}));
 
 console.log(path.join(__dirname, "/../src/public"));
 app.use(express.static(path.join(__dirname, "/../src/public"), { maxAge: 31557600000 }));
@@ -45,12 +51,13 @@ app.use(express.static(path.join(__dirname, "/../src/public"), { maxAge: 3155760
 
 
 app.post("/login", (req, res, next) => {
-  addUserDB(req.body);
-  req.session.user = {
+  let user = {
     name: req.body.name,
     password: req.body.password
   };
-  res.redirect('/chat.html');
+  loginDB.addUserDB(user);
+  req.session.user = user;
+  res.redirect("/chat.html");
   console.log(req.body, "loginform");
 });
 

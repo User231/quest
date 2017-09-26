@@ -8,7 +8,7 @@ interface IUser {
   password: string;
 }
 
-export default async function (userData: IUser) {
+export async function addUserDB(userData: IUser) {
   let db: mongodb.Db = undefined;
   let usersCollection: mongodb.Collection = undefined;
 
