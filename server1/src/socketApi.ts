@@ -6,12 +6,6 @@ import { Core } from "./core";
 import { Collection } from "./storage";
 import { ClientConnection } from "./clientConnection";
 
-interface IChatMessage {
-  timestamp: number;
-  userId: number;
-  type: string;
-  data: string|Object;
-}
 
 interface IClientConnection {
   //userId: number;
@@ -81,8 +75,4 @@ export function create(server: http.Server) {
   });
 
   return router;
-}
-
-function getCurrentTimestamp(): number {
-  return new Date().getTime();
 }
