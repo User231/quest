@@ -7,9 +7,8 @@ $(function () {
     if (!text)
       return false;
     ws.send(JSON.stringify({
-      userId: 333423,
-      type: "text",
-      data: text
+      type: "messages",
+      messages: [{type: "text", data: text}]
     }));
     $('#m').val('');
     showTextMessage(text);
