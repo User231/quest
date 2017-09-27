@@ -1,15 +1,15 @@
 $(function () {
   
-  ws = new WebSocket(`ws://${location.host}`);
+  ws = undefined;
+  flag = 0;
 
   $('form').submit(function(){
     var text = $('#m').val();
     if (!text)
       return false;
     ws.send(JSON.stringify({
-      userId: 333423,
-      type: "text",
-      data: text
+      type: "messages",
+      messages: [{type: "text", data: text}]
     }));
     $('#m').val('');
     showTextMessage(text);
@@ -50,8 +50,26 @@ $(function () {
     }
   };
 
-  ws.onerror = () => showTextMessage('WebSocket error');
-  ws.onopen = () => showTextMessage('WebSocket connection established');
-  ws.onclose = () => showTextMessage('WebSocket connection closed');
-  ws.onmessage = (event) => onMessage(event.data);
+  var establishConnection = () => {
+    var setHandlers = () => {
+      ws.onerror = () => {
+        showTextMessage('WebSocket error');
+        setTimeout(() => { establishConnection(); }, 10000);
+      };
+      ws.onopen = () => showTextMessage('WebSocket connection established');
+      ws.onclose = () => showTextMessage('WebSocket connection closed');
+      ws.onmessage = (event) => onMessage(event.data);
+    }
+    if (flag == 0) {
+      ws = new WebSocket(`wss://${location.host}`);
+      flag = 1;
+      setHandlers();
+    }
+    else if (flag == 1) {
+      ws = new WebSocket(`ws://${location.host}`);
+      flag = 0;
+      setHandlers();
+    }
+  }
+  establishConnection();
 });

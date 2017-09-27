@@ -4,13 +4,8 @@ import http = require("http");
 import url = require("url");
 import { Core } from "./core";
 import { Collection } from "./storage";
+import { ClientConnection } from "./clientConnection";
 
-interface IChatMessage {
-  timestamp: number;
-  userId: number;
-  type: string;
-  data: string|Object;
-}
 
 interface IClientConnection {
   //userId: number;
@@ -32,7 +27,7 @@ export function create(server: http.Server) {
   // router
   const router = express.Router();
 
-  let clients: IClientConnection[] = [];
+  /*let clients: IClientConnection[] = [];
 
   let onClientMessage = (message: ws.Data): void => {
     try {
@@ -48,9 +43,9 @@ export function create(server: http.Server) {
     catch (err) {
       console.log(err);
     }
-  };
+  };*/
 
-  let onClientConnected = async (client: IClientConnection) => {
+  /*let onClientConnected = async (client: IClientConnection) => {
     clients.push(client);
     try {
       let coll = Core.getStorage().getCollection(Collection.Messages);
@@ -58,32 +53,21 @@ export function create(server: http.Server) {
       client.ws.send(JSON.stringify({
         type: "messages",
         messages: lastMessages
-      }));
+      }), err => {
+        console.log(err);
+      });
     }
     catch (e) {
       console.log(e);
     }
-  }
+  }*/
 
   const wss = new ws.Server({
     server: server
   });
 
   wss.on("connection", (client, req) => {
-    const location = url.parse(req.url, true);
-    
-    // You might use location.query.access_token to authenticate or share sessions
-    // or req.headers.cookie (see http://stackoverflow.com/a/16395220/151312)
-
-    client.on("message", message => {
-      console.log("received: %s", message);
-      onClientMessage(message);
-    });
-
-    onClientConnected({
-      ws: client,
-      lastSeenOnline: getCurrentTimestamp()
-    });
+    ClientConnection.registerClient(client);
   });
 
   router.get("/connect", (req, res, next) => {
@@ -91,8 +75,4 @@ export function create(server: http.Server) {
   });
 
   return router;
-}
-
-function getCurrentTimestamp(): number {
-  return new Date().getTime();
 }

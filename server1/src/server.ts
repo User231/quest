@@ -14,7 +14,6 @@ import authorization = require("express-authorization");
 
 
 import passport = require("passport");
-import websocket = require("websocket");
 import http = require("http");
 
 import loginDB = require("./loginDB");
@@ -53,7 +52,9 @@ app.use(session({
 console.log(path.join(__dirname, "/../src/public"));
 app.use(express.static(path.join(__dirname, "/../src/public"), { maxAge: 31557600000 }));
 
+let filesApi = require("./filesApi");
 
+app.use("/upload", filesApi);
 
 app.post("/login", (req, res, next) => {
   let user = {
