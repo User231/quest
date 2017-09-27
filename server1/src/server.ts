@@ -41,12 +41,13 @@ app.use(logger("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.text());
+app.use(cookieParser());
 
 app.use(session({
   secret: "keyboard cat",
+  //cookie: { secure: true },
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: true }
+  saveUninitialized: true
 }));
 
 console.log(path.join(__dirname, "/../src/public"));
@@ -59,10 +60,42 @@ app.post("/login", (req, res, next) => {
     name: req.body.name,
     password: req.body.password
   };
-  loginDB.addUserDB(user);
+  //loginDB.addUserDB(user);
   req.session.user = user;
   res.redirect("/chat.html");
-  console.log(req.body, "loginform");
+  //console.log(req.body, "loginform");
+});
+
+app.post("/addmarker", (req, res, next) => {
+  let marker = {
+    position: req.body.position,
+    description: req.body.description,
+    user: req.session.user.name
+  };
+  console.log(marker, "addmarker");
+  res.json({
+    ok: true
+  });
+});
+
+app.post("/getmarkers", (req, res, next) => {
+  let markersArr = [{
+      position: {lat: 57.00000104209985, lng: 36.00001160055399},
+      description: "fhmx",
+      user: "dslg"
+    },
+    {
+      position: {lat: 57.00000104208885, lng: 36.00001160055399},
+      description: "2222",
+      user: "dslg"
+    },
+    {
+      position: {lat: 57.00000104208899, lng: 36.00001160055399},
+      description: "333",
+      user: "dslg"
+    }
+  ]
+  res.json({markersArr});
 });
 
 
