@@ -14,7 +14,6 @@ import authorization = require("express-authorization");
 
 
 import passport = require("passport");
-import websocket = require("websocket");
 import http = require("http");
 
 import loginDB = require("./loginDB");
