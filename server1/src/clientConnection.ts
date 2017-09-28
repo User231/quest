@@ -22,14 +22,35 @@ export class ClientConnection {
     this.clients.push(new ClientConnection(socket));
   }
 
+  public static Init() {
+    setInterval(() => {
+      ClientConnection.Idle();
+    }, 3000);
+  }
+
+  protected static Idle() {
+    let clientsAlive = [];
+    ClientConnection.clients.forEach(client => {
+      let currTime = ClientConnection.getCurrentTimestamp();
+      let diff = currTime - client.lastSeenOnline;
+      if (diff > 15000 && diff < 30000)
+        client.sendMessage("ping");
+      if (diff < 40000)
+        clientsAlive.push(client);
+      else
+        client.socket.close();
+    });
+    ClientConnection.clients = clientsAlive;
+  }
+
   protected socket: ws;
   protected lastSeenOnline: number;
 
   constructor(socket: ws) {
     this.socket = socket;
 
-    this.socket.on("message", message => this.messageReceived(message));
-    this.sendLastMessages();
+    this.socket.on("message", message => this.messageReceived(message));    
+    this.lastSeenOnline = ClientConnection.getCurrentTimestamp();
   }
 
   public sendMessage(message: string): void {
@@ -42,8 +63,17 @@ export class ClientConnection {
   }
 
   protected messageReceived(message: any): void {
+    let timestamp = ClientConnection.getCurrentTimestamp();
+    this.lastSeenOnline = timestamp;
+    if (message == "ping")
+      return;
+    if (message == "history") {
+      this.sendLastMessages();
+      return;
+    }
+
     ClientConnection.clients.forEach(clientConn => {
-      if (clientConn != this)  // dont sent to sender
+      if (clientConn != this)  // dont send to sender
         clientConn.sendMessage(message);
     });
 
@@ -51,7 +81,7 @@ export class ClientConnection {
       let messagesObject: IChatMessages = JSON.parse(message.toString());
       if (!messagesObject.type || !messagesObject.messages)
         return console.log("Wrong message format");
-      let timestamp = this.getCurrentTimestamp();
+      
       messagesObject.messages.forEach(mess => {
         if (!mess.type || !mess.data)
           console.log("Wrong message format");
@@ -81,7 +111,7 @@ export class ClientConnection {
     }
   }
 
-  protected getCurrentTimestamp(): number {
+  protected static getCurrentTimestamp(): number {
     return new Date().getTime();
   }
 }
