@@ -70,10 +70,22 @@ app.post("/login", (req, res, next) => {
 app.post("/addmarker", (req, res, next) => {
   let marker = {
     position: req.body.position,
-    description: req.body.description,
-    user: req.session.user.name
+    description: req.body.description/* ,
+    user: req.session.user.name */
   };
   console.log(marker, "addmarker");
+  res.json({
+    ok: true
+  });
+});
+
+app.post("/removemarker", (req, res, next) => {
+  let marker = {
+    position: req.body.position,
+    description: req.body.description/* ,
+    user: req.session.user.name */
+  };
+  console.log(marker, "removemarker");
   res.json({
     ok: true
   });
