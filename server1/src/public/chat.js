@@ -30,6 +30,10 @@ $(function () {
     $.ajax(settings).done(function (response) {
       //console.log(response);
       showImageMessage(response);
+      ws.send(JSON.stringify({
+        type: "messages",
+        messages: [{type: "image", data: response}]
+      }));
     });
   });
 
@@ -76,6 +80,7 @@ $(function () {
 
   var onMessage = (event) => {
     let data = undefined;
+    console.log(event, 'ws')
     try {
       data = JSON.parse(event);
       if (!data || !data.type)
