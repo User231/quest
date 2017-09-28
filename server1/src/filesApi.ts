@@ -28,6 +28,7 @@ router.post("/", (req, res, next) => {
 });
 
 router.use((err: Error, req, res, next) => {
+  console.log(err)
   res.status(500).json({
     ok: false,
     error: err
