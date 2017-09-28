@@ -5,19 +5,36 @@ $(function () {
 
   var fileInput = $('#file_input_file');
   var fileInputText = $('#m');
-  
- /*  fileInput.change( function(event) {
-    var tmppath = event.target.files[0];
 
-    ws.send(event.target.files[0])
+  
+
+  fileInput.change( function(event) {
     
-    fileInputText.val(fileInput.val());
-    $('#m').addClass('file');
-  }); */
+    var form = new FormData();
+    form.append("file", event.target.files[0]);
+    
+    var settings = {
+      "async": true,
+      "crossDomain": true,
+      "url": "/upload",
+      "method": "POST",
+      "headers": {
+        "cache-control": "no-cache"
+      },
+      "processData": false,
+      "contentType": false,
+      "mimeType": "multipart/form-data",
+      "data": form
+    }
+    
+    $.ajax(settings).done(function (response) {
+      //console.log(response);
+      showImageMessage(response);
+    });
+  });
 
   $('form').submit(function(){
     var submitNode = $('#m');
-    if (submitNode.attr('class') !== 'file') {
       var text = $('#m').val();
       if (!text)
         return false;
@@ -28,11 +45,6 @@ $(function () {
       $('#m').val('');
       showTextMessage(text);
       return false;
-    }
-    else {
-      showTextMessage(imgPreload);
-      submitNode.removeClass('file');
-    }
   });
 
   var appendMessage = (message, scroll) => {
@@ -41,9 +53,14 @@ $(function () {
     if (message.type == "text") {
       $('#messages').append($('<li>').text(message.data));
     }
-    if (message.type == "image") {
-      //$('#messages').append($('<li>').text(message.data));
-      message.appendTo($('#messages').append($('<li>')))
+    if (message.type == "image") {      
+      var img = $('<img />',
+        { class: 'image',
+          src: "/uploads/" + message.data
+        })     
+      $('#messages').append($('<li>')
+        .attr('class', '')        
+        .append(img));
     }
     if (scroll)
       window.scrollTo(0, document.body.scrollHeight);
@@ -54,7 +71,6 @@ $(function () {
   }
 
   var showImageMessage = (message, scroll) => {
-    console.log(message, 'imgpath')
     appendMessage({type: "image", data: message}, true);
   }
 
@@ -102,43 +118,9 @@ $(function () {
   establishConnection();
 });
 
-// Select your input type file and store it in a variable
-const input = document.getElementById('file_input_file');
+$(document).on('click','.image', function(e){
+  e.stopImmediatePropagation()
+  $(e.target).toggleClass('image-active');
+});
 
-// This will upload the file after having read it
-const upload = (e) => {
-  fetch('/upload', { // Your POST endpoint
-    method: 'POST',
-    headers: {
-      "Content-Type": "You will perhaps need to define a content-type here"
-    },
-    body: e.currentTarget.result // This is the content of your file
-  })
-};
-
-// Event handler executed when a file is selected
-const onSelectFile = (files) => {
-  // Files is a list because you can select several files
-  // We just upload the first selected file
-  const file = input.files[0];
-  const reader = new FileReader();
-  var data = new FormData()
-  data.append('file', input.files[0])
-
-  // We read the file and call the upload function with the result
-  /* reader.onload = upload;
-  reader.readAsArrayBuffer(file); */
-
-  fetch('/upload', { // Your POST endpoint
-    method: 'POST',
-    headers: {
-      "Content-Type": "You will perhaps need to define a content-type here"
-    },
-    body: data // This is the content of your file
-  })
-};
-
-// Add a listener on your input
-// It will be triggered when a file will be selected
-input.addEventListener('change', onSelectFile , false);
 
