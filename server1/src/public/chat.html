@@ -7,7 +7,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font: 13px Helvetica, Arial; margin-bottom: 50px; }
         form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-        form input { border: 0; padding: 10px; width: 80%; margin-right: .5%; }
+        form input { border: 0; padding: 10px; width: 84%; margin-right: .5%; }
         form button { width: 9%; background: rgb(255,82,82); border: none; padding: 10px; margin: 0 1%;}
         #messages { list-style-type: none; margin: 0; padding: 0; padding-bottom: 50px;}
         #messages li { padding: 5px 10px; }
@@ -34,11 +34,26 @@
       </style>
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.2/material.blue_grey-red.min.css" type="text/css">
-      
+      <link href="styles/app.css?version=2" rel="stylesheet" type="text/css">
+      <link href="styles/install-button.css" rel="stylesheet" type="text/css">
+
       <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   </head>
   <body>
     <ul id="messages"></ul>
+    <div class="wrapper">
+      <section class="main-controls">
+        <canvas class="visualizer" height="60px"></canvas>
+        <div id="buttons">
+          <button class="record" style="">Record sound</button>
+          <button class="stop" disabled="">Send sound</button>
+        </div>
+      </section>
+      <section class="sound-clips"></section>
+    </div>
+    <label for="toggle"></label>
+    <input type="checkbox" id="toggle">
+          
     <form name="publish" action="">
         
       <input id="m" autocomplete="off" />
@@ -49,18 +64,14 @@
               <input id="file_input_file" class="none" type="file" />
             </label>
           </div>
-        </div>
-        <div class="file_input_div">
-          <div class="file_input">
-            <label class="image_input_button mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-js-ripple-effect mdl-button--colored">
-              <i class="material-icons">volume_mute</i>
-              <input id="file_input_sound" class="none" type="file" />
-            </label>
-          </div>
-        </div>
+        </div>        
         <button>Send</button>
     </form>
-    
+    <script src="scripts/install.js"></script>
+    <script src="scripts/mediaDevices-getUserMedia-polyfill.js"></script>
+    <!-- Below is your custom application script -->
+    <script src="scripts/app.js?version=6"></script>
+
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script src="https://storage.googleapis.com/code.getmdl.io/1.0.0/material.min.js"></script>
     
