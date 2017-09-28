@@ -30,34 +30,7 @@ $(function () {
       }));
     });
   });
-
-  var soundInput = $('#file_input_sound');
-  soundInput.change( function(event) {    
-    var form = new FormData();
-    form.append("file", event.target.files[0]);    
-    var settings = {
-      "async": true,
-      "crossDomain": true,
-      "url": "/upload",
-      "method": "POST",
-      "headers": {
-        "cache-control": "no-cache"
-      },
-      "processData": false,
-      "contentType": false,
-      "mimeType": "multipart/form-data",
-      "data": form
-    }    
-    $.ajax(settings).done(function (response) {
-      //console.log(response);
-      showSoundMessage(response);
-      ws.send(JSON.stringify({
-        type: "messages",
-        messages: [{type: "sound", data: response}]
-      }));
-    });
-  });
-
+  
   $('form').submit(function(){
     var submitNode = $('#m');
       var text = $('#m').val();
