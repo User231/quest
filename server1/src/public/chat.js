@@ -5,14 +5,9 @@ $(function () {
 
   var fileInput = $('#file_input_file');
   var fileInputText = $('#m');
-
-  
-
-  fileInput.change( function(event) {
-    
+  fileInput.change( function(event) {    
     var form = new FormData();
-    form.append("file", event.target.files[0]);
-    
+    form.append("file", event.target.files[0]);    
     var settings = {
       "async": true,
       "crossDomain": true,
@@ -25,14 +20,40 @@ $(function () {
       "contentType": false,
       "mimeType": "multipart/form-data",
       "data": form
-    }
-    
+    }    
     $.ajax(settings).done(function (response) {
       //console.log(response);
       showImageMessage(response);
       ws.send(JSON.stringify({
         type: "messages",
         messages: [{type: "image", data: response}]
+      }));
+    });
+  });
+
+  var soundInput = $('#file_input_sound');
+  soundInput.change( function(event) {    
+    var form = new FormData();
+    form.append("file", event.target.files[0]);    
+    var settings = {
+      "async": true,
+      "crossDomain": true,
+      "url": "/upload",
+      "method": "POST",
+      "headers": {
+        "cache-control": "no-cache"
+      },
+      "processData": false,
+      "contentType": false,
+      "mimeType": "multipart/form-data",
+      "data": form
+    }    
+    $.ajax(settings).done(function (response) {
+      //console.log(response);
+      showSoundMessage(response);
+      ws.send(JSON.stringify({
+        type: "messages",
+        messages: [{type: "sound", data: response}]
       }));
     });
   });
@@ -66,6 +87,16 @@ $(function () {
         .attr('class', '')        
         .append(img));
     }
+    if (message.type == "sound") {      
+      var audio = $('<audio />',
+        { class: 'sound',
+          src: "/uploads/" + message.data,
+          controls: "controls"
+        })     
+      $('#messages').append($('<li>')
+        .attr('class', '')        
+        .append(audio));
+    }
     if (scroll)
       window.scrollTo(0, document.body.scrollHeight);
   }
@@ -78,9 +109,12 @@ $(function () {
     appendMessage({type: "image", data: message}, true);
   }
 
+  var showSoundMessage = (message, scroll) => {
+    appendMessage({type: "sound", data: message}, true);
+  }
+
   var onMessage = (event) => {
     let data = undefined;
-    console.log(event, 'ws')
     try {
       data = JSON.parse(event);
       if (!data || !data.type)

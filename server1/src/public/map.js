@@ -62,6 +62,14 @@ function initMap (){
             description: content
           })
         })
+
+        ws.send(JSON.stringify({
+          type: "messages",
+          messages: [{type: "addmessage", data: {
+            position: pos,
+            description: content
+          }}]
+        }));
       }
       var element = document.getElementById("map"); 
       var map = new google.maps.Map(element, {
@@ -129,4 +137,52 @@ function initMap (){
           };
       });
   })
+
+  var onMessage = (event) => {
+    let data = undefined;
+    try {
+      data = JSON.parse(event);
+      if (!data || !data.type)
+        return;
+      if (data.type == "messages" && data.messages.type === "addmarker") {
+        if (!data.messages || !data.messages.length)
+          return;
+        for(var i = data.messages.length - 1 ; i >= 0 ; i--) {
+          addMarker(data.messages[i].data.position, data.messages[i].data.description);
+        }
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+    }
+    catch(e) {
+      console.log(e);
+    }
+  };
+
+  ws = undefined;
+  flag = 0;
+  
+  
+  var establishConnection = () => {
+    var setHandlers = () => {
+      ws.onerror = () => {
+        console.log('WebSocket error');
+        setTimeout(() => { establishConnection(); }, 10000);
+      };
+      ws.onopen = () => console.log('WebSocket connection established');
+      ws.onclose = () => console.log('WebSocket connection closed');
+      ws.onmessage = (event) => onMessage(event.data);
+    }
+    if (flag == 0) {
+      ws = new WebSocket(`wss://${location.host}`);
+      flag = 1;
+      setHandlers();
+    }
+    else if (flag == 1) {
+      ws = new WebSocket(`ws://${location.host}`);
+      flag = 0;
+      setHandlers();
+    }
+  }
+  establishConnection();
 }
+
