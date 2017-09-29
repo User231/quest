@@ -85,7 +85,7 @@ export class ClientConnection {
       if (messagesObject.type == "messages") {
         messagesObject.messages.forEach(mess => {
           if (!mess.type || !mess.data)
-            console.log("Wrong message format");
+            return console.log("Wrong message format");
           mess.timestamp = timestamp;
           Core.getStorage().getCollection(Collection.Messages).insertOne(mess, (err, result) => {
             if (err)
@@ -95,6 +95,8 @@ export class ClientConnection {
       }
       if (messagesObject.type == "markers") {
         messagesObject.messages.forEach(mess => {
+          if (!mess.data)
+            return console.log("Wrong message format");
           mess.timestamp = timestamp;
           Core.getStorage().getCollection(Collection.MapPoints).insertOne(mess, (err, result) => {
             if (err)
