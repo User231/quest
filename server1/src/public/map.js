@@ -2,8 +2,8 @@ function initMap (){
   var infowindow = new google.maps.InfoWindow();
   var markers = [];
   var counter = 0;
-
-  fetch("/getmarkers", {
+  var poly;
+  /* fetch("/getmarkers", {
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
@@ -13,7 +13,7 @@ function initMap (){
     body: ''
   })
   .then((response) => response.json())
-  .then((response) => {
+  .then((response) => { */
       function addMarker(location, content) {  
         counter++;    
         var marker = new google.maps.Marker({
@@ -29,43 +29,32 @@ function initMap (){
             infowindow.open(map, marker);
         });
       }
-      function deleteMarker(markerId) {
-        for (var i=0; i<markers.length; i++) {      
+      function deleteMarker(markerId, ws) {
+        for (var i=0; i<markers.length; i++) { 
+          if (!ws) {
+               
             if (markers[i].id === markerId) {
-              fetch("/removemarker", {
-                headers: {
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                method: "POST",
-                body: JSON.stringify({
-                  position: markers[i].position,
-                  description: markers[i].description
-                })
-              })
-
+              ws.send(JSON.stringify({
+                type: "markers",
+                messages: [{type: "removemarker", data: {
+                  position: markers[i].position
+                }}]
+              }));
+              console.log(markers[i].position, "del")
               markers[i].setMap(null);
             }
+          }        
+          else {
+            if (markers[i].getPosition().lat() == markerId.lat && markers[i].getPosition().lng() == markerId.lng) {
+              markers[i].setMap(null);
+            }
+          }
         }
       }
       function sendMarker (pos, content) {
-        fetch("/addmarker", {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          method: "POST",
-          body: JSON.stringify({
-            position: pos,
-            description: content
-          })
-        })
-
         ws.send(JSON.stringify({
-          type: "messages",
-          messages: [{type: "addmessage", data: {
+          type: "markers",
+          messages: [{type: "addmarker", data: {
             position: pos,
             description: content
           }}]
@@ -73,8 +62,8 @@ function initMap (){
       }
       var element = document.getElementById("map"); 
       var map = new google.maps.Map(element, {
-          center: new google.maps.LatLng(57, 36),
-          zoom: 22,
+          center: new google.maps.LatLng(50.101576, 36.289871),
+          zoom: 16,
           mapTypeId: "OSM",
           mapTypeControl: false,
           streetViewControl: false,
@@ -102,11 +91,19 @@ function initMap (){
           maxZoom: 30
         })
       ); 
-      let responseArr = response.markersArr;
-      for (var markerItem = 0; markerItem < responseArr.length; markerItem++) {
-        let markerResponse = responseArr[markerItem];
-        addMarker(markerResponse.position, markerResponse.description);     
+
+      poly = new google.maps.Polyline({
+        strokeColor: '#000000',
+        strokeOpacity: 1.0,
+        strokeWeight: 3
+      });
+      poly.setMap(map);
+
+      function addPolyPoint(event) {
+        var path = poly.getPath();
+        path.push(event.latLng);        
       }
+      
       google.maps.event.addListener(map, 'click', function (e) {
         let showDialogNode = document.querySelector('.modalbg')
           if (!showDialogNode.classList.contains('show')) {
@@ -136,22 +133,38 @@ function initMap (){
               deleteMarker(id);
           };
       });
-  })
+  //})
 
   var onMessage = (event) => {
+    if (event == "ping")
+      return ws.send("ping");
     let data = undefined;
+      //
     try {
       data = JSON.parse(event);
       if (!data || !data.type)
         return;
-      if (data.type == "messages" && data.messages.type === "addmarker") {
+      if (data.type == "markers") {
         if (!data.messages || !data.messages.length)
           return;
         for(var i = data.messages.length - 1 ; i >= 0 ; i--) {
-          addMarker(data.messages[i].data.position, data.messages[i].data.description);
+          if (data.messages[i].type === "addmarker") {
+            addMarker(data.messages[i].data.position, data.messages[i].data.description);
+          }
+          else if (data.messages[i].type === "removemarker") {
+            deleteMarker(data.messages[i].data.position, true);
+          }
+
         }
-        window.scrollTo(0, document.body.scrollHeight);
       }
+      if (data.type == "polyline") {
+        if (!data.messages || !data.messages.length)
+          return;
+        for(var i = data.messages.length - 1 ; i >= 0 ; i--) {
+          addPolyPoint(data.messages[i].data);
+        }
+      }
+      else return;
     }
     catch(e) {
       console.log(e);
@@ -160,16 +173,27 @@ function initMap (){
 
   ws = undefined;
   flag = 0;
+  delay = 1000;
+  historyFlag = 0;
   
   
   var establishConnection = () => {
     var setHandlers = () => {
       ws.onerror = () => {
         console.log('WebSocket error');
-        setTimeout(() => { establishConnection(); }, 10000);
+        //setTimeout(() => { establishConnection(); }, delay);
       };
-      ws.onopen = () => console.log('WebSocket connection established');
-      ws.onclose = () => console.log('WebSocket connection closed');
+      ws.onopen = () => {
+        console.log('WebSocket connection established');
+        if (historyFlag == 0) {
+          historyFlag = 1;
+          ws.send("history");
+        }
+      }
+      ws.onclose = () => { 
+        console.log('WebSocket connection closed');
+        setTimeout(() => { establishConnection(); }, 3000);
+      }
       ws.onmessage = (event) => onMessage(event.data);
     }
     if (flag == 0) {
