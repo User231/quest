@@ -32,7 +32,7 @@ $(function () {
       }));
     });
   });
-  
+
   $('form').submit(function(){
     var submitNode = $('#m');
       var text = $('#m').val();
@@ -99,8 +99,21 @@ $(function () {
       if (data.type == "messages") {
         if (!data.messages || !data.messages.length)
           return;
-        for(var i = data.messages.length - 1 ; i >= 0 ; i--) {
-          appendMessage(data.messages[i]);
+        if (data.messages.length === 1 && data.messages[0].type === "sound") {
+          var audio = $('<audio />',
+            { class: 'sound',
+              src: "/uploads/" + data.messages[0].data,
+              controls: "controls"
+            })     
+          $('#messages').append($('<li>')
+            .attr('class', '')        
+            .append(audio));
+          $(".sound").last().trigger("play");
+        }
+        else {
+          for(var i = data.messages.length - 1 ; i >= 0 ; i--) {
+            appendMessage(data.messages[i]);
+          }
         }
         window.scrollTo(0, document.body.scrollHeight);
       }
