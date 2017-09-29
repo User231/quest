@@ -29,46 +29,29 @@ function initMap (){
             infowindow.open(map, marker);
         });
       }
-      function deleteMarker(position) {
-        for (var i=0; i<markers.length; i++) {      
-            if (markers[i].position === position) {
-             /*  fetch("/removemarker", {
-                headers: {
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                method: "POST",
-                body: JSON.stringify({
-                  position: markers[i].position,
-                  description: markers[i].description
-                })
-              }) */
+      function deleteMarker(markerId, ws) {
+        for (var i=0; i<markers.length; i++) { 
+          if (!ws) {
+               
+            if (markers[i].id === markerId) {
               ws.send(JSON.stringify({
                 type: "markers",
                 messages: [{type: "removemarker", data: {
                   position: markers[i].position
                 }}]
               }));
-
+              console.log(markers[i].position, "del")
               markers[i].setMap(null);
             }
+          }        
+          else {
+            if (markers[i].getPosition().lat() == markerId.lat && markers[i].getPosition().lng() == markerId.lng) {
+              markers[i].setMap(null);
+            }
+          }
         }
       }
       function sendMarker (pos, content) {
-        /* fetch("/addmarker", {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          method: "POST",
-          body: JSON.stringify({
-            position: pos,
-            description: content
-          })
-        }) */
-
         ws.send(JSON.stringify({
           type: "markers",
           messages: [{type: "addmarker", data: {
@@ -153,7 +136,10 @@ function initMap (){
   //})
 
   var onMessage = (event) => {
+    if (event == "ping")
+      return ws.send("ping");
     let data = undefined;
+      //
     try {
       data = JSON.parse(event);
       if (!data || !data.type)
@@ -163,15 +149,22 @@ function initMap (){
           return;
         for(var i = data.messages.length - 1 ; i >= 0 ; i--) {
           if (data.messages[i].type === "addmarker") {
-            addMarker(data.messages[i].data, data.messages[i].data.description);
+            addMarker(data.messages[i].data.position, data.messages[i].data.description);
           }
           else if (data.messages[i].type === "removemarker") {
-            addMarker(data.messages[i].data, ''/* data.messages[i].data.description */);
+            deleteMarker(data.messages[i].data.position, true);
           }
 
         }
-        window.scrollTo(0, document.body.scrollHeight);
       }
+      if (data.type == "polyline") {
+        if (!data.messages || !data.messages.length)
+          return;
+        for(var i = data.messages.length - 1 ; i >= 0 ; i--) {
+          addPolyPoint(data.messages[i].data);
+        }
+      }
+      else return;
     }
     catch(e) {
       console.log(e);
@@ -180,16 +173,27 @@ function initMap (){
 
   ws = undefined;
   flag = 0;
+  delay = 1000;
+  historyFlag = 0;
   
   
   var establishConnection = () => {
     var setHandlers = () => {
       ws.onerror = () => {
         console.log('WebSocket error');
-        setTimeout(() => { establishConnection(); }, 10000);
+        //setTimeout(() => { establishConnection(); }, delay);
       };
-      ws.onopen = () => console.log('WebSocket connection established');
-      ws.onclose = () => console.log('WebSocket connection closed');
+      ws.onopen = () => {
+        console.log('WebSocket connection established');
+        if (historyFlag == 0) {
+          historyFlag = 1;
+          ws.send("history");
+        }
+      }
+      ws.onclose = () => { 
+        console.log('WebSocket connection closed');
+        setTimeout(() => { establishConnection(); }, 3000);
+      }
       ws.onmessage = (event) => onMessage(event.data);
     }
     if (flag == 0) {
