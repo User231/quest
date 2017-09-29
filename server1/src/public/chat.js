@@ -2,6 +2,8 @@ $(function () {
   
   ws = undefined;
   flag = 0;
+  delay = 1000;
+  historyFlag = 0;
 
   var fileInput = $('#file_input_file');
   var fileInputText = $('#m');
@@ -87,14 +89,14 @@ $(function () {
   }
 
   var onMessage = (event) => {
-    
+    if (event == "ping")
+      return ws.send("ping");
     let data = undefined;
     try {
       data = JSON.parse(event);
       if (!data || !data.type)
         return;
       if (data.type == "messages") {
-        console.log(data.messages[0])
         if (!data.messages || !data.messages.length)
           return;
         if (data.messages.length === 1 && data.messages[0].type === "sound") {
@@ -124,11 +126,20 @@ $(function () {
   var establishConnection = () => {
     var setHandlers = () => {
       ws.onerror = () => {
-        showTextMessage('WebSocket error');
-        setTimeout(() => { establishConnection(); }, 10000);
+        console.log('WebSocket error');
+        //setTimeout(() => { establishConnection(); }, delay);
       };
-      ws.onopen = () => showTextMessage('WebSocket connection established');
-      ws.onclose = () => showTextMessage('WebSocket connection closed');
+      ws.onopen = () => {
+        console.log('WebSocket connection established');
+        if (historyFlag == 0) {
+          historyFlag = 1;
+          ws.send("history");
+        }
+      }
+      ws.onclose = () => { 
+        console.log('WebSocket connection closed');
+        setTimeout(() => { establishConnection(); }, 3000);
+      }
       ws.onmessage = (event) => onMessage(event.data);
     }
     if (flag == 0) {
@@ -140,6 +151,7 @@ $(function () {
       ws = new WebSocket(`ws://${location.host}`);
       flag = 0;
       setHandlers();
+      delay = 10000;
     }
   }
   establishConnection();
