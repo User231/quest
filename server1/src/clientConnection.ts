@@ -82,15 +82,26 @@ export class ClientConnection {
       if (!messagesObject.type || !messagesObject.messages)
         return console.log("Wrong message format");
       
-      messagesObject.messages.forEach(mess => {
-        if (!mess.type || !mess.data)
-          console.log("Wrong message format");
-        mess.timestamp = timestamp;
-        Core.getStorage().getCollection(Collection.Messages).insertOne(mess, (err, result) => {
-          if (err)
-            return console.log(err);
+      if (messagesObject.type == "messages") {
+        messagesObject.messages.forEach(mess => {
+          if (!mess.type || !mess.data)
+            console.log("Wrong message format");
+          mess.timestamp = timestamp;
+          Core.getStorage().getCollection(Collection.Messages).insertOne(mess, (err, result) => {
+            if (err)
+              return console.log(err);
+          });
         });
-      });
+      }
+      if (messagesObject.type == "markers") {
+        messagesObject.messages.forEach(mess => {
+          mess.timestamp = timestamp;
+          Core.getStorage().getCollection(Collection.MapPoints).insertOne(mess, (err, result) => {
+            if (err)
+              return console.log(err);
+          });
+        });
+      }
     }
     catch (err) {
       console.log(err);
@@ -103,6 +114,18 @@ export class ClientConnection {
       let lastMessages = await coll.find().sort({ timestamp: -1 }).limit(50).toArray();
       this.sendMessage(JSON.stringify({
         type: "messages",
+        messages: lastMessages
+      }));
+    }
+    catch (e) {
+      console.log(e);
+    }
+
+    try {
+      let coll = Core.getStorage().getCollection(Collection.MapPoints);
+      let lastMessages = await coll.find().sort({ timestamp: -1 }).limit(500).toArray();
+      this.sendMessage(JSON.stringify({
+        type: "markers",
         messages: lastMessages
       }));
     }
