@@ -12,6 +12,7 @@ export enum Collection {
 export class StorageService {
   
   protected db: mongodb.Db = undefined;
+  public ready: boolean = false;
 
   protected collections: { [id: string]: mongodb.Collection } = {};
   
@@ -23,6 +24,7 @@ export class StorageService {
       }
       this.db = res;
       Object.keys(Collection).forEach(key => this.collections[Collection[key]] = this.db.collection(Collection[key]));
+      this.ready = true;
     });
   }
 

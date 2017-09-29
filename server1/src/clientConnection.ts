@@ -7,6 +7,16 @@ interface IChatMessages {
   messages: IChatMessage[]
 }
 
+interface IPoint {
+  lat: number;
+  lng: number;
+}
+
+interface IPolyline {
+  type: string,
+  messages: IPoint[]
+}
+
 interface IChatMessage {
   timestamp: number;
   userId: number;
@@ -18,6 +28,8 @@ export class ClientConnection {
 
   protected static clients: ClientConnection[] = [];
 
+  protected static polyline: IPoint[] = [];
+
   public static registerClient(socket: ws): void {
     this.clients.push(new ClientConnection(socket));
   }
@@ -26,6 +38,21 @@ export class ClientConnection {
     setInterval(() => {
       ClientConnection.Idle();
     }, 3000);
+
+    setTimeout(async () => {
+      let polyLinesCollection = Core.getStorage().getCollection(Collection.MapPolylines);
+      let entry = await polyLinesCollection.findOne({xx: 33});
+      if (!entry)
+        await polyLinesCollection.insertOne({xx: 33, messages: []});
+      ClientConnection.polyline = (await polyLinesCollection.findOne({xx: 33})).messages;
+      setInterval(() => {
+        polyLinesCollection.updateOne({xx: 33}, {xx: 33, messages: ClientConnection.polyline}, (err, result) => {
+          if (err)
+            return console.log(err);
+        });
+      }, 30000);
+    }, 1000);
+    /**/
   }
 
   protected static Idle() {
@@ -43,6 +70,17 @@ export class ClientConnection {
     ClientConnection.clients = clientsAlive;
   }
 
+  public static reportPosition(lat: number, lng: number) {
+    this.polyline.push({lat: lat, lng: lng});
+    ClientConnection.clients.forEach(clientConn => {
+      clientConn.sendMessage(JSON.stringify({
+        type: "pos",
+        lat: lat,
+        lng: lng
+      }));
+    });
+  }
+
   protected socket: ws;
   protected lastSeenOnline: number;
 
@@ -58,7 +96,7 @@ export class ClientConnection {
       this.socket.send(message);
     }
     catch (err) {
-      console.log(err);
+      //console.log(err);
     }
   }
 
@@ -129,6 +167,16 @@ export class ClientConnection {
       this.sendMessage(JSON.stringify({
         type: "markers",
         messages: lastMessages
+      }));
+    }
+    catch (e) {
+      console.log(e);
+    }
+
+    try {
+      this.sendMessage(JSON.stringify({
+        type: "polyline",
+        messages: ClientConnection.polyline
       }));
     }
     catch (e) {

@@ -19,6 +19,7 @@ import http = require("http");
 import loginDB = require("./loginDB");
 
 import { Core } from "./core";
+import { ClientConnection } from "./clientConnection";
 
 /**
  * Load environment variables from .env file, where API keys and passwords are configured.
@@ -26,6 +27,17 @@ import { Core } from "./core";
 dotenv.config({ path: ".env.example" });
 
 Core.Init();
+
+function pausecomp(millis) {
+    let date = new Date();
+    let curDate: Date = undefined;
+    do { curDate = new Date(); }
+    while (curDate.getTime() - date.getTime() < millis);
+}
+
+/*while (!Core.getStorage().ready) {
+  yield;
+}*/
 
 /**
  * Create Express server.
@@ -55,6 +67,21 @@ app.use(express.static(path.join(__dirname, "/../src/public"), { maxAge: 3155760
 let filesApi = require("./filesApi");
 
 app.use("/upload", filesApi);
+
+app.post("/pos", (req, res, next) => {
+  console.log(req.body);
+
+  ClientConnection.reportPosition(req.body.lat, req.body.lon);
+  /*
+  alt: "174.5"
+  battery: "40"
+  bearing: "298.5"
+  lat: "50.05348"
+  lon: "36.29443"
+  speed: "0.4"
+  */
+  res.send("ok");
+});
 
 app.post("/login", (req, res, next) => {
   let user = {

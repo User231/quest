@@ -3,6 +3,13 @@ function initMap (){
   var markers = [];
   var counter = 0;
   var poly;
+  var polyPath;
+
+  ws = undefined;
+  flag = 0;
+  delay = 1000;
+  historyFlag = 0;
+  
   /* fetch("/getmarkers", {
     headers: {
       'Accept': 'application/json',
@@ -29,9 +36,9 @@ function initMap (){
             infowindow.open(map, marker);
         });
       }
-      function deleteMarker(markerId, ws) {
+      function deleteMarker(markerId, isMine) {
         for (var i=0; i<markers.length; i++) { 
-          if (!ws) {
+          if (!isMine) {
                
             if (markers[i].id === markerId) {
               ws.send(JSON.stringify({
@@ -92,17 +99,7 @@ function initMap (){
         })
       ); 
 
-      poly = new google.maps.Polyline({
-        strokeColor: '#000000',
-        strokeOpacity: 1.0,
-        strokeWeight: 3
-      });
-      poly.setMap(map);
-
-      function addPolyPoint(event) {
-        var path = poly.getPath();
-        path.push(event.latLng);        
-      }
+      
       
       google.maps.event.addListener(map, 'click', function (e) {
         let showDialogNode = document.querySelector('.modalbg')
@@ -158,11 +155,30 @@ function initMap (){
         }
       }
       if (data.type == "polyline") {
-        if (!data.messages || !data.messages.length)
+        if (!data.messages)
           return;
-        for(var i = data.messages.length - 1 ; i >= 0 ; i--) {
-          addPolyPoint(data.messages[i].data);
-        }
+        polyPath = [];
+        data.messages.forEach(function(element) {
+          polyPath.push({lat: parseFloat(element.lat), lng: parseFloat(element.lng)})
+        }, this);
+        poly = new google.maps.Polyline({
+          path: polyPath,
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2
+        });
+        poly.setMap(map);
+      }
+      if (data.type == "pos") {
+        polyPath.push({lat: parseFloat(data.lat), lng: parseFloat(data.lng)});
+        poly.setMap(null);
+        poly = new google.maps.Polyline({
+          path: polyPath,
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2
+        });
+        poly.setMap(map);
       }
       else return;
     }
@@ -171,10 +187,7 @@ function initMap (){
     }
   };
 
-  ws = undefined;
-  flag = 0;
-  delay = 1000;
-  historyFlag = 0;
+
   
   
   var establishConnection = () => {
